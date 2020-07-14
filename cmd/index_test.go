@@ -18,16 +18,19 @@ func contains(arr []string, str string) bool {
 
 func TestIsOldIndex(t *testing.T) {
 	now := time.Now().Unix()
-	old := isOldIndex("hello", "20060102", 7, now)
+	old := isOldIndex("hello", []string{"20060102", "2006.01.02"}, 7, now)
 	assert.False(t, old)
 
-	old = isOldIndex("hello-20200102", "20060102", 7, now)
+	old = isOldIndex("hello-20200102", []string{"2006.01.02"}, 7, now)
+	assert.False(t, old)
+
+	old = isOldIndex("hello-20200102", []string{"2006.01.02", "20060102"}, 7, now)
 	assert.True(t, old)
 
-	old = isOldIndex("hello-20200102", "2006.01.02", 7, now)
+	old = isOldIndex("hello-20200102", []string{"2006.01.02"}, 7, now)
 	assert.False(t, old)
 
-	old = isOldIndex("hello-2020.01.02", "2006.01.02", 7, now)
+	old = isOldIndex("hello-2020.01.02", []string{"20060102", "2006.01.02"}, 7, now)
 	assert.True(t, old)
 }
 

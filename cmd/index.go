@@ -48,14 +48,16 @@ func getOpeningIndexNames() []string {
 	return opens
 }
 
-func isOldIndex(name string, format string, days int64, now int64) bool {
-	if len(name) < len(format) {
-		return false
-	}
-	ts, err := time.Parse(format, name[len(name)-len(format):len(name)])
-	if err == nil {
-		if now-ts.Unix() > 86400*days {
-			return true
+func isOldIndex(name string, formats []string, days int64, now int64) bool {
+	for _, format := range formats {
+		if len(name) < len(format) {
+			continue
+		}
+		ts, err := time.Parse(format, name[len(name)-len(format):len(name)])
+		if err == nil {
+			if now-ts.Unix() > 86400*days {
+				return true
+			}
 		}
 	}
 	return false
@@ -65,13 +67,8 @@ func getOldIndexNames(indexNames []string, days int64) []string {
 	var olds []string
 	now := time.Now().Unix()
 	for _, name := range indexNames {
-		if isOldIndex(name, "20060102", days, now) {
+		if isOldIndex(name, []string{"20060102", "2006.01.02"}, days, now) {
 			olds = append(olds, name)
-			continue
-		}
-		if isOldIndex(name, "2006.01.02", days, now) {
-			olds = append(olds, name)
-			continue
 		}
 	}
 	return olds
