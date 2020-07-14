@@ -16,7 +16,7 @@ var indexCmd = &cobra.Command{
 		if a == "list" {
 			list()
 		} else if a == "close" {
-			log.Println(a)
+			close()
 		} else if a == "delete" {
 			log.Println(a)
 		} else {
@@ -81,5 +81,9 @@ func list() {
 }
 
 func close() {
+	names := getOldIndexNames(getOpeningIndexNames(), 7)
 
+	for _, name := range names {
+		log.Println(name)
+	}
 }
