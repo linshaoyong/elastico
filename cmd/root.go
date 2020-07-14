@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/olivere/elastic"
 )
 
 type Config struct {
@@ -26,9 +26,10 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+// Execute ...
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Panic("Fatal error config file: %s \n", err)
+		log.WithFields(log.Fields{"error": err}).Panic("Fatal error config file")
 	}
 }
 
@@ -43,11 +44,11 @@ func initConfig() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Panic("Fatal error config file: %s \n", err)
+		log.WithFields(log.Fields{"error": err}).Panic("Read config file fail")
 	}
 	err = viper.Unmarshal(&C)
 	if err != nil {
-		log.Panic("Fatal error config file: %s \n", err)
+		log.WithFields(log.Fields{"error": err}).Panic("Unmarshal config file fail")
 	}
 }
 
@@ -55,7 +56,7 @@ func initClients() {
 	for _, cluster := range C.Clusters {
 		client, err := elastic.NewSimpleClient(elastic.SetURL(cluster.Addresses...))
 		if err != nil {
-			log.Warn("connect to es fail: %s \n", err)
+			log.WithFields(log.Fields{"error": err}).Warn("connect to es fail")
 			break
 		}
 		esClients = append(esClients, client)
