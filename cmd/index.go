@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -47,10 +48,31 @@ func getOpeningIndexNames() []string {
 	return opens
 }
 
-func getOldIndexNames(indexNames []string) []string {
+func isOldIndex(name string, format string, days int64, now int64) bool {
+	if len(name) < len(format) {
+		return false
+	}
+	ts, err := time.Parse(format, name[len(name)-len(format):len(name)])
+	if err == nil {
+		if now-ts.Unix() > 86400*days {
+			return true
+		}
+	}
+	return false
+}
+
+func getOldIndexNames(indexNames []string, days int64) []string {
 	var olds []string
+	now := time.Now().Unix()
 	for _, name := range indexNames {
-		olds = append(olds, name)
+		if isOldIndex(name, "20060102", days, now) {
+			olds = append(olds, name)
+			continue
+		}
+		if isOldIndex(name, "2006.01.02", days, now) {
+			olds = append(olds, name)
+			continue
+		}
 	}
 	return olds
 }
