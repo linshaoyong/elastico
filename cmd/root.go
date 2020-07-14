@@ -38,7 +38,7 @@ func init() {
 
 func initConfig() {
 	viper.AddConfigPath(".")
-	viper.SetConfigName("conf")
+	viper.SetConfigName("elastico")
 	viper.SetConfigType("toml")
 
 	err := viper.ReadInConfig()
