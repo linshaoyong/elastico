@@ -1,4 +1,4 @@
-module linshaoyong.com/elasticgo
+module linshaoyong.com/elastico
 
 go 1.14
 

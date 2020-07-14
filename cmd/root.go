@@ -20,7 +20,7 @@ var C Config
 var esClients []*elasticsearch.Client
 
 var rootCmd = &cobra.Command{
-	Use: "elasticgo",
+	Use: "elastico",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("Root......")
 	},
@@ -37,7 +37,6 @@ func init() {
 }
 
 func initConfig() {
-	log.Println("Root initConfig......")
 	viper.AddConfigPath(".")
 	viper.SetConfigName("conf")
 	viper.SetConfigType("toml")

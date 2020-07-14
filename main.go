@@ -1,7 +1,7 @@
 package main
 
 import (
-	"linshaoyong.com/elasticgo/cmd"
+	"linshaoyong.com/elastico/cmd"
 )
 
 func main() {
