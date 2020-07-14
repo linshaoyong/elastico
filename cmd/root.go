@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	elasticsearch "github.com/elastic/go-elasticsearch/v6"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/olivere/elastic"
 )
 
 type Config struct {
@@ -17,7 +17,7 @@ type Cluster struct {
 
 var C Config
 
-var esClients []*elasticsearch.Client
+var esClients []*elastic.Client
 
 var rootCmd = &cobra.Command{
 	Use: "elastico",
@@ -53,10 +53,7 @@ func initConfig() {
 
 func initClients() {
 	for _, cluster := range C.Clusters {
-		cfg := elasticsearch.Config{
-			Addresses: cluster.Addresses,
-		}
-		client, err := elasticsearch.NewClient(cfg)
+		client, err := elastic.NewSimpleClient(elastic.SetURL(cluster.Addresses...))
 		if err != nil {
 			log.Warn("connect to es fail: %s \n", err)
 			break
