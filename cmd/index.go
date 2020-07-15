@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"strings"
 	"time"
 
+	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -31,18 +33,15 @@ func init() {
 	indexCmd.Flags().String("a", "list", "index action")
 }
 
-func getOpeningIndexNames() []string {
+func getOpeningIndexNames(client *elastic.Client) []string {
 	var opens []string
-	for _, client := range esClients {
-		names, err := client.IndexNames()
-		if err != nil {
-			log.Warn(err)
-			continue
-		}
-		for _, name := range names {
-			if !strings.HasPrefix(name, ".") {
-				opens = append(opens, name)
-			}
+	names, err := client.IndexNames()
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Warn("get opening indexes fail")
+	}
+	for _, name := range names {
+		if !strings.HasPrefix(name, ".") {
+			opens = append(opens, name)
 		}
 	}
 	return opens
@@ -75,15 +74,26 @@ func getOldIndexNames(indexNames []string, days int64) []string {
 }
 
 func list() {
-	for _, name := range getOpeningIndexNames() {
-		log.Println(name)
+	for _, client := range esClients {
+		for _, name := range getOpeningIndexNames(client) {
+			log.Println(name)
+		}
 	}
 }
 
 func close() {
-	names := getOldIndexNames(getOpeningIndexNames(), 7)
+	for _, client := range esClients {
+		names := getOldIndexNames(getOpeningIndexNames(client), 14)
 
-	for _, name := range names {
-		log.Println(name)
+		for _, name := range names {
+			cresp, err := client.CloseIndex(name).Do(context.TODO())
+			if err != nil {
+				log.WithFields(log.Fields{"index": name, "error": err}).Warn("close index fail")
+			} else if !cresp.Acknowledged {
+				log.WithFields(log.Fields{"index": name, "error": err}).Warn("expected close index to be acknowledged")
+			} else {
+				log.WithFields(log.Fields{"index": name}).Info("index closed")
+			}
+		}
 	}
 }
