@@ -7,9 +7,13 @@ addresses = [
   "http://124.236.111.105:9200"
 ]
 
-#[clusters.mmdata]
-#addresses = [
-#  "http://124.236.111.112:9200",
-#  "http://124.236.111.113:9200",
-#  "http://124.236.111.114:9200"
-#]
+index_open_days = { fusion_cdn = 31 }
+
+[clusters.mmdata]
+addresses = [
+  "http://124.236.111.112:9200",
+  "http://124.236.111.113:9200",
+  "http://124.236.111.114:9200"
+]
+
+index_open_days = { billing = 3, ss = 3, squidlog-parent = 2, lemon = 31, areadata = 31, falcon = 31, heap = 31, node = 31}

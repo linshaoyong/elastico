@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"context"
 	"strings"
 	"time"
 
-	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -33,20 +31,6 @@ func init() {
 	indexCmd.Flags().String("a", "list", "index action")
 }
 
-func getOpeningIndexNames(client *elastic.Client) []string {
-	var opens []string
-	names, err := client.IndexNames()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Warn("get opening indexes fail")
-	}
-	for _, name := range names {
-		if !strings.HasPrefix(name, ".") {
-			opens = append(opens, name)
-		}
-	}
-	return opens
-}
-
 func isOldIndex(name string, formats []string, days int64, now int64) bool {
 	for _, format := range formats {
 		if len(name) < len(format) {
@@ -62,11 +46,18 @@ func isOldIndex(name string, formats []string, days int64, now int64) bool {
 	return false
 }
 
-func getOldIndexNames(indexNames []string, days int64) []string {
+func getOldIndexNames(indexNames []string, days int64, customDays map[string]int64) []string {
 	var olds []string
 	now := time.Now().Unix()
 	for _, name := range indexNames {
-		if isOldIndex(name, []string{"20060102", "2006.01.02"}, days, now) {
+		var realDays = days
+		for cdk, cdv := range customDays {
+			if strings.HasPrefix(name, cdk) {
+				realDays = cdv
+				break
+			}
+		}
+		if isOldIndex(name, []string{"20060102", "2006.01.02"}, realDays, now) {
 			olds = append(olds, name)
 		}
 	}
@@ -74,26 +65,18 @@ func getOldIndexNames(indexNames []string, days int64) []string {
 }
 
 func list() {
-	for _, client := range esClients {
-		for _, name := range getOpeningIndexNames(client) {
-			log.Println(name)
+	for _, cluster := range clusters {
+		for _, name := range cluster.GetOpeningIndexNames() {
+			log.Info(name)
 		}
 	}
 }
 
 func close() {
-	for _, client := range esClients {
-		names := getOldIndexNames(getOpeningIndexNames(client), 14)
-
+	for _, cluster := range clusters {
+		names := getOldIndexNames(cluster.GetOpeningIndexNames(), 7, cluster.IndexOpenDays)
 		for _, name := range names {
-			cresp, err := client.CloseIndex(name).Do(context.TODO())
-			if err != nil {
-				log.WithFields(log.Fields{"index": name, "error": err}).Warn("close index fail")
-			} else if !cresp.Acknowledged {
-				log.WithFields(log.Fields{"index": name, "error": err}).Warn("expected close index to be acknowledged")
-			} else {
-				log.WithFields(log.Fields{"index": name}).Info("index closed")
-			}
+			cluster.CloseIndex(name)
 		}
 	}
 }

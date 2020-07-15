@@ -1,23 +1,59 @@
 package cmd
 
 import (
+	"context"
+	"strings"
+
 	"github.com/olivere/elastic"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
+// Config ...
 type Config struct {
 	Clusters map[string]Cluster
 }
 
+// Cluster ...
 type Cluster struct {
-	Addresses []string
+	Name          string
+	ESClient      *elastic.Client
+	Addresses     []string
+	IndexOpenDays map[string]int64 `mapstructure:"index_open_days"`
 }
 
+// GetOpeningIndexNames ...
+func (cluster *Cluster) GetOpeningIndexNames() []string {
+	var opens []string
+	names, err := cluster.ESClient.IndexNames()
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Warn("get opening indexes fail")
+	}
+	for _, name := range names {
+		if !strings.HasPrefix(name, ".") {
+			opens = append(opens, name)
+		}
+	}
+	return opens
+}
+
+// CloseIndex ...
+func (cluster *Cluster) CloseIndex(name string) {
+	cresp, err := cluster.ESClient.CloseIndex(name).Do(context.TODO())
+	if err != nil {
+		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name, "error": err}).Warn("close index fail")
+	} else if !cresp.Acknowledged {
+		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name, "error": err}).Warn("expected close index to be acknowledged")
+	} else {
+		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name}).Info("old index closed")
+	}
+}
+
+// C ...
 var C Config
 
-var esClients []*elastic.Client
+var clusters []Cluster
 
 var rootCmd = &cobra.Command{
 	Use: "elastico",
@@ -34,7 +70,7 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, initClients)
+	cobra.OnInitialize(initConfig, initClusters)
 }
 
 func initConfig() {
@@ -52,13 +88,15 @@ func initConfig() {
 	}
 }
 
-func initClients() {
-	for _, cluster := range C.Clusters {
+func initClusters() {
+	for name, cluster := range C.Clusters {
 		client, err := elastic.NewSimpleClient(elastic.SetURL(cluster.Addresses...))
 		if err != nil {
 			log.WithFields(log.Fields{"error": err}).Warn("connect to es fail")
 			break
 		}
-		esClients = append(esClients, client)
+		cluster.Name = name
+		cluster.ESClient = client
+		clusters = append(clusters, cluster)
 	}
 }
