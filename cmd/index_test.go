@@ -18,19 +18,25 @@ func contains(arr []string, str string) bool {
 
 func TestIsOldIndex(t *testing.T) {
 	now := time.Now().Unix()
-	old := isOldIndex("hello", []string{"20060102", "2006.01.02"}, 7, now)
+	old, _ := isOldIndex("hello", []string{"20060102", "2006.01.02"}, 7, now)
 	assert.False(t, old)
 
-	old = isOldIndex("hello-20200102", []string{"2006.01.02"}, 7, now)
+	old, _ = isOldIndex("hello-20200102", []string{"2006.01.02"}, 7, now)
 	assert.False(t, old)
 
-	old = isOldIndex("hello-20200102", []string{"2006.01.02", "20060102"}, 7, now)
+	old, _ = isOldIndex("hello-20200102", []string{"2006.01.02", "20060102"}, 7, now)
 	assert.True(t, old)
 
-	old = isOldIndex("hello-20200102", []string{"2006.01.02"}, 7, now)
+	old, _ = isOldIndex("hello-20200102", []string{"2006.01.02"}, 7, now)
 	assert.False(t, old)
 
-	old = isOldIndex("hello-2020.01.02", []string{"20060102", "2006.01.02"}, 7, now)
+	old, _ = isOldIndex("hello-2020.01.02", []string{"20060102", "2006.01.02"}, 7, now)
+	assert.True(t, old)
+
+	old, _ = isOldIndex("hello-2030.01", []string{"2006.01"}, 7, now)
+	assert.False(t, old)
+
+	old, _ = isOldIndex("hello-202001", []string{"200601"}, 50, now)
 	assert.True(t, old)
 }
 

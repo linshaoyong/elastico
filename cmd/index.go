@@ -31,19 +31,21 @@ func init() {
 	indexCmd.Flags().String("a", "list", "index action")
 }
 
-func isOldIndex(name string, formats []string, days int64, now int64) bool {
+func isOldIndex(name string, formats []string, days int64, now int64) (bool, bool) {
+	match := false
 	for _, format := range formats {
 		if len(name) < len(format) {
 			continue
 		}
 		ts, err := time.Parse(format, name[len(name)-len(format):len(name)])
 		if err == nil {
+			match = true
 			if now-ts.Unix() > 86400*days {
-				return true
+				return true, match
 			}
 		}
 	}
-	return false
+	return false, match
 }
 
 func getOldIndexNames(indexNames []string, days int64, customDays map[string]int64) []string {
@@ -57,8 +59,19 @@ func getOldIndexNames(indexNames []string, days int64, customDays map[string]int
 				break
 			}
 		}
-		if isOldIndex(name, []string{"20060102", "2006.01.02"}, realDays, now) {
+
+		// daily index
+		isOld, match := isOldIndex(name, []string{"20060102", "2006.01.02"}, realDays, now)
+		if isOld {
 			olds = append(olds, name)
+		}
+
+		if !match {
+			// maybe monthly index
+			realDays += 50
+			if isOld, _ = isOldIndex(name, []string{"2006.01", "200601"}, realDays, now); isOld {
+				olds = append(olds, name)
+			}
 		}
 	}
 	return olds
