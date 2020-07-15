@@ -23,8 +23,8 @@ type Cluster struct {
 	IndexOpenDays map[string]int64 `mapstructure:"index_open_days"`
 }
 
-// GetOpeningIndexNames ...
-func (cluster *Cluster) GetOpeningIndexNames() []string {
+// GetOpenedIndexNames ...
+func (cluster *Cluster) GetOpenedIndexNames() []string {
 	var opens []string
 	names, err := cluster.ESClient.IndexNames()
 	if err != nil {
@@ -36,6 +36,23 @@ func (cluster *Cluster) GetOpeningIndexNames() []string {
 		}
 	}
 	return opens
+}
+
+// GetClosedIndexNames ...
+func (cluster *Cluster) GetClosedIndexNames() []string {
+	var closeds []string
+	ctx := context.Background()
+	res, err := cluster.ESClient.CatIndices().Columns("index", "status").Do(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, row := range res {
+		log.WithFields(log.Fields{"index": row.Index, "status": row.Status}).Warn("index")
+		if row.Status == "close" && !strings.HasPrefix(row.Index, ".") {
+			closeds = append(closeds, row.Index)
+		}
+	}
+	return closeds
 }
 
 // CloseIndex ...

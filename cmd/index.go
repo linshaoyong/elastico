@@ -18,7 +18,7 @@ var indexCmd = &cobra.Command{
 		} else if a == "close" {
 			close()
 		} else if a == "delete" {
-			log.Println(a)
+			delete()
 		} else {
 			log.Println("Do nothing......")
 		}
@@ -79,7 +79,7 @@ func getOldIndexNames(indexNames []string, days int64, customDays map[string]int
 
 func list() {
 	for _, cluster := range clusters {
-		for _, name := range cluster.GetOpeningIndexNames() {
+		for _, name := range cluster.GetOpenedIndexNames() {
 			log.Info(name)
 		}
 	}
@@ -87,9 +87,19 @@ func list() {
 
 func close() {
 	for _, cluster := range clusters {
-		names := getOldIndexNames(cluster.GetOpeningIndexNames(), 7, cluster.IndexOpenDays)
+		names := getOldIndexNames(cluster.GetOpenedIndexNames(), 7, cluster.IndexOpenDays)
 		for _, name := range names {
 			cluster.CloseIndex(name)
+		}
+	}
+}
+
+func delete() {
+	for _, cluster := range clusters {
+		names := cluster.GetClosedIndexNames()
+		names = getOldIndexNames(names, 125, map[string]int64{})
+		for _, name := range names {
+			log.Info(name)
 		}
 	}
 }
