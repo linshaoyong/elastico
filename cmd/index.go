@@ -62,15 +62,16 @@ func filterIndexsEarlyThan(indexNames []string, days int64, customDays map[strin
 
 		startUnix := now - 86400*deltaDays
 		// daily index
-		isOld, match := isIndexEarlyThan(name, []string{"20060102", "2006.01.02"}, startUnix)
-		if isOld {
+		isEarly, match := isIndexEarlyThan(name, []string{"20060102", "2006.01.02"}, startUnix)
+		if isEarly {
 			olds = append(olds, name)
 		}
 
 		if !match {
 			// maybe monthly index
 			deltaDays += 50
-			if isOld, _ = isIndexEarlyThan(name, []string{"2006.01", "200601"}, startUnix); isOld {
+			startUnix = now - 86400*deltaDays
+			if isEarly, _ = isIndexEarlyThan(name, []string{"2006.01", "200601"}, startUnix); isEarly {
 				olds = append(olds, name)
 			}
 		}
