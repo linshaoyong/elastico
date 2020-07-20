@@ -16,31 +16,31 @@ func contains(arr []string, str string) bool {
 	return false
 }
 
-func TestIsOldIndex(t *testing.T) {
+func TestisIndexEarlyThan(t *testing.T) {
 	now := time.Now().Unix()
-	old, _ := isOldIndex("hello", []string{"20060102", "2006.01.02"}, 7, now)
+	old, _ := isIndexEarlyThan("hello", []string{"20060102", "2006.01.02"}, now-7*86400)
 	assert.False(t, old)
 
-	old, _ = isOldIndex("hello-20200102", []string{"2006.01.02"}, 7, now)
+	old, _ = isIndexEarlyThan("hello-20200102", []string{"2006.01.02"}, now-7*86400)
 	assert.False(t, old)
 
-	old, _ = isOldIndex("hello-20200102", []string{"2006.01.02", "20060102"}, 7, now)
+	old, _ = isIndexEarlyThan("hello-20200102", []string{"2006.01.02", "20060102"}, now-7*86400)
 	assert.True(t, old)
 
-	old, _ = isOldIndex("hello-20200102", []string{"2006.01.02"}, 7, now)
+	old, _ = isIndexEarlyThan("hello-20200102", []string{"2006.01.02"}, now-7*86400)
 	assert.False(t, old)
 
-	old, _ = isOldIndex("hello-2020.01.02", []string{"20060102", "2006.01.02"}, 7, now)
+	old, _ = isIndexEarlyThan("hello-2020.01.02", []string{"20060102", "2006.01.02"}, now-7*86400)
 	assert.True(t, old)
 
-	old, _ = isOldIndex("hello-2030.01", []string{"2006.01"}, 7, now)
+	old, _ = isIndexEarlyThan("hello-2030.01", []string{"2006.01"}, now-7*86400)
 	assert.False(t, old)
 
-	old, _ = isOldIndex("hello-202001", []string{"200601"}, 50, now)
+	old, _ = isIndexEarlyThan("hello-202001", []string{"200601"}, now-50*86400)
 	assert.True(t, old)
 }
 
-func TestGetOldIndexs(t *testing.T) {
+func TestFilterIndexsEarlyThan(t *testing.T) {
 	names := []string{
 		"hello",
 		"k8s_cluster_xm-2020.05.06",
@@ -49,7 +49,7 @@ func TestGetOldIndexs(t *testing.T) {
 		"fruit_dc_coverregion_compare-20200609",
 		"fruit_dc_coverregion_compare-20300606",
 	}
-	olds := getOldIndexNames(names, 7, map[string]int64{})
+	olds := filterIndexsEarlyThan(names, 7, map[string]int64{})
 	assert.Equal(t, 3, len(olds))
 	assert.True(t, contains(olds, "k8s_cluster_xm-2020.05.06"))
 	assert.True(t, contains(olds, "fusion_cdn-2020.06.29"))
@@ -57,7 +57,7 @@ func TestGetOldIndexs(t *testing.T) {
 	assert.False(t, contains(olds, "hexv2-2030.07.09"))
 }
 
-func TestGetOldIndexsWithCustomDays(t *testing.T) {
+func TestFilterIndexsEarlyThanWithCustomDays(t *testing.T) {
 	var customDays = map[string]int64{
 		"fusion_cdn": 10000000,
 		"hexv2":      7,
@@ -71,7 +71,7 @@ func TestGetOldIndexsWithCustomDays(t *testing.T) {
 		"fruit_dc_coverregion_compare-20200609",
 		"fruit_dc_coverregion_compare-20300606",
 	}
-	olds := getOldIndexNames(names, 7, customDays)
+	olds := filterIndexsEarlyThan(names, 7, customDays)
 	assert.Equal(t, 2, len(olds))
 	assert.True(t, contains(olds, "k8s_cluster_xm-2020.05.06"))
 	assert.True(t, contains(olds, "fruit_dc_coverregion_compare-20200609"))

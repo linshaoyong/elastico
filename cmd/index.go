@@ -31,7 +31,7 @@ func init() {
 	indexCmd.Flags().String("a", "list", "index action")
 }
 
-func isOldIndex(name string, formats []string, days int64, now int64) (bool, bool) {
+func isIndexEarlyThan(name string, formats []string, startUnix int64) (bool, bool) {
 	match := false
 	for _, format := range formats {
 		if len(name) < len(format) {
@@ -40,7 +40,7 @@ func isOldIndex(name string, formats []string, days int64, now int64) (bool, boo
 		ts, err := time.Parse(format, name[len(name)-len(format):len(name)])
 		if err == nil {
 			match = true
-			if now-ts.Unix() > 86400*days {
+			if startUnix > ts.Unix() {
 				return true, match
 			}
 		}
@@ -48,28 +48,29 @@ func isOldIndex(name string, formats []string, days int64, now int64) (bool, boo
 	return false, match
 }
 
-func getOldIndexNames(indexNames []string, days int64, customDays map[string]int64) []string {
+func filterIndexsEarlyThan(indexNames []string, days int64, customDays map[string]int64) []string {
 	var olds []string
 	now := time.Now().Unix()
 	for _, name := range indexNames {
-		var realDays = days
+		var deltaDays = days
 		for cdk, cdv := range customDays {
 			if strings.HasPrefix(name, cdk) {
-				realDays = cdv
+				deltaDays = cdv
 				break
 			}
 		}
 
+		startUnix := now - 86400*deltaDays
 		// daily index
-		isOld, match := isOldIndex(name, []string{"20060102", "2006.01.02"}, realDays, now)
+		isOld, match := isIndexEarlyThan(name, []string{"20060102", "2006.01.02"}, startUnix)
 		if isOld {
 			olds = append(olds, name)
 		}
 
 		if !match {
 			// maybe monthly index
-			realDays += 50
-			if isOld, _ = isOldIndex(name, []string{"2006.01", "200601"}, realDays, now); isOld {
+			deltaDays += 50
+			if isOld, _ = isIndexEarlyThan(name, []string{"2006.01", "200601"}, startUnix); isOld {
 				olds = append(olds, name)
 			}
 		}
@@ -87,7 +88,7 @@ func list() {
 
 func close() {
 	for _, cluster := range clusters {
-		names := getOldIndexNames(cluster.GetOpenedIndexNames(), 7, cluster.IndexOpenDays)
+		names := filterIndexsEarlyThan(cluster.GetOpenedIndexNames(), cluster.IndexDefaultOpenDays, cluster.IndexOpenDays)
 		for _, name := range names {
 			cluster.CloseIndex(name)
 		}
@@ -97,9 +98,9 @@ func close() {
 func delete() {
 	for _, cluster := range clusters {
 		names := cluster.GetClosedIndexNames()
-		names = getOldIndexNames(names, 125, map[string]int64{})
+		names = filterIndexsEarlyThan(names, cluster.IndexDefaultRemainDays, map[string]int64{})
 		for _, name := range names {
-			log.Info(name)
+			cluster.DeleteIndex(name)
 		}
 	}
 }

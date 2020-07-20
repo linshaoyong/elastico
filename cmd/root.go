@@ -17,10 +17,12 @@ type Config struct {
 
 // Cluster ...
 type Cluster struct {
-	Name          string
-	ESClient      *elastic.Client
-	Addresses     []string
-	IndexOpenDays map[string]int64 `mapstructure:"index_open_days"`
+	Name                   string
+	ESClient               *elastic.Client
+	Addresses              []string
+	IndexOpenDays          map[string]int64 `mapstructure:"index_open_days"`
+	IndexDefaultRemainDays int64            `mapstructure:"index_default_remain_days"`
+	IndexDefaultOpenDays   int64            `mapstructure:"index_default_open_days"`
 }
 
 // GetOpenedIndexNames ...
@@ -47,7 +49,6 @@ func (cluster *Cluster) GetClosedIndexNames() []string {
 		log.Fatal(err)
 	}
 	for _, row := range res {
-		log.WithFields(log.Fields{"index": row.Index, "status": row.Status}).Warn("index")
 		if row.Status == "close" && !strings.HasPrefix(row.Index, ".") {
 			closeds = append(closeds, row.Index)
 		}
@@ -61,9 +62,23 @@ func (cluster *Cluster) CloseIndex(name string) {
 	if err != nil {
 		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name, "error": err}).Warn("close index fail")
 	} else if !cresp.Acknowledged {
-		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name, "error": err}).Warn("expected close index to be acknowledged")
+		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name}).Warn("expected close index to be acknowledged")
 	} else {
-		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name}).Info("old index closed")
+		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name}).Info("index closed")
+	}
+}
+
+// DeleteIndex ...
+func (cluster *Cluster) DeleteIndex(name string) {
+	ctx := context.Background()
+	deleteIndex, err := cluster.ESClient.DeleteIndex(name).Do(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name, "error": err}).Warn("delete index fail")
+	}
+	if !deleteIndex.Acknowledged {
+		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name}).Warn("expected delete index to be acknowledged")
+	} else {
+		log.WithFields(log.Fields{"cluster": cluster.Name, "index": name}).Info("index deleted")
 	}
 }
 
@@ -114,6 +129,9 @@ func initClusters() {
 		}
 		cluster.Name = name
 		cluster.ESClient = client
+		if cluster.IndexDefaultRemainDays < 10 {
+			cluster.IndexDefaultRemainDays = 125
+		}
 		clusters = append(clusters, cluster)
 	}
 }
