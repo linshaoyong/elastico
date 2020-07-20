@@ -125,7 +125,7 @@ func initClusters() {
 		client, err := elastic.NewSimpleClient(elastic.SetURL(cluster.Addresses...))
 		if err != nil {
 			log.WithFields(log.Fields{"error": err}).Warn("connect to es fail")
-			break
+			continue
 		}
 		cluster.Name = name
 		cluster.ESClient = client
