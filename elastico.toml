@@ -7,7 +7,7 @@ addresses = [
   "http://1.1.1.3:9200"
 ]
 index_default_open_days = 7
-index_open_days = { fusion_cdn = 31 }
+index_open_days = { index_a = 31 }
 index_default_remain_days = 366
 
 [clusters.c2]
@@ -17,5 +17,5 @@ addresses = [
   "http://2.2.2.3:9200"
 ]
 index_default_open_days = 7
-index_open_days = { billing = 3, ss = 3, squidlog-parent = 2, lemon = 31, areadata = 31, falcon = 31, heap = 31, node = 31}
+index_open_days = { index_a = 3, index_b = 3, index_c = 2}
 index_default_remain_days = 155
