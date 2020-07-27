@@ -10,12 +10,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config ...
 type Config struct {
 	Clusters map[string]Cluster
 }
 
-// Cluster ...
 type Cluster struct {
 	Name                   string
 	ESClient               *elastic.Client
@@ -25,7 +23,6 @@ type Cluster struct {
 	IndexDefaultOpenDays   int64            `mapstructure:"index_default_open_days"`
 }
 
-// GetOpenedIndexNames ...
 func (cluster *Cluster) GetOpenedIndexNames() []string {
 	var opens []string
 	names, err := cluster.ESClient.IndexNames()
@@ -40,7 +37,6 @@ func (cluster *Cluster) GetOpenedIndexNames() []string {
 	return opens
 }
 
-// GetClosedIndexNames ...
 func (cluster *Cluster) GetClosedIndexNames() []string {
 	var closeds []string
 	ctx := context.Background()
@@ -56,7 +52,6 @@ func (cluster *Cluster) GetClosedIndexNames() []string {
 	return closeds
 }
 
-// CloseIndex ...
 func (cluster *Cluster) CloseIndex(name string) {
 	cresp, err := cluster.ESClient.CloseIndex(name).Do(context.TODO())
 	if err != nil {
@@ -68,7 +63,6 @@ func (cluster *Cluster) CloseIndex(name string) {
 	}
 }
 
-// DeleteIndex ...
 func (cluster *Cluster) DeleteIndex(name string) {
 	ctx := context.Background()
 	deleteIndex, err := cluster.ESClient.DeleteIndex(name).Do(ctx)
@@ -82,7 +76,6 @@ func (cluster *Cluster) DeleteIndex(name string) {
 	}
 }
 
-// C ...
 var C Config
 
 var clusters []Cluster
@@ -94,7 +87,6 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-// Execute ...
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.WithFields(log.Fields{"error": err}).Panic("Fatal error config file")
