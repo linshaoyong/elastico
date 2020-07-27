@@ -43,38 +43,38 @@ func TestisIndexEarlyThan(t *testing.T) {
 func TestFilterIndexsEarlyThan(t *testing.T) {
 	names := []string{
 		"hello",
-		"k8s_cluster_xm-2020.05.06",
-		"fusion_cdn-2020.06.29",
-		"hexv2-2030.07.09",
-		"fruit_dc_coverregion_compare-20200609",
-		"fruit_dc_coverregion_compare-20300606",
+		"index-a-2020.05.06",
+		"index-e-2020.06.29",
+		"index-c-2030.07.09",
+		"index-b-20200609",
+		"index-b-20300606",
 	}
 	olds := filterIndexsEarlyThan(names, 7, map[string]int64{})
 	assert.Equal(t, 3, len(olds))
-	assert.True(t, contains(olds, "k8s_cluster_xm-2020.05.06"))
-	assert.True(t, contains(olds, "fusion_cdn-2020.06.29"))
-	assert.True(t, contains(olds, "fruit_dc_coverregion_compare-20200609"))
-	assert.False(t, contains(olds, "hexv2-2030.07.09"))
+	assert.True(t, contains(olds, "index-a-2020.05.06"))
+	assert.True(t, contains(olds, "index-e-2020.06.29"))
+	assert.True(t, contains(olds, "index-b-20200609"))
+	assert.False(t, contains(olds, "index-c-2030.07.09"))
 }
 
 func TestFilterIndexsEarlyThanWithCustomDays(t *testing.T) {
 	var customDays = map[string]int64{
-		"fusion_cdn": 10000000,
-		"hexv2":      7,
+		"index-e": 10000000,
+		"index-c":      7,
 	}
 
 	names := []string{
 		"hello",
-		"k8s_cluster_xm-2020.05.06",
-		"fusion_cdn-2020.06.29",
-		"hexv2-2030.07.09",
-		"fruit_dc_coverregion_compare-20200609",
-		"fruit_dc_coverregion_compare-20300606",
+		"index-a-2020.05.06",
+		"index-e-2020.06.29",
+		"index-c-2030.07.09",
+		"index-b-20200609",
+		"index-b-20300606",
 	}
 	olds := filterIndexsEarlyThan(names, 7, customDays)
 	assert.Equal(t, 2, len(olds))
-	assert.True(t, contains(olds, "k8s_cluster_xm-2020.05.06"))
-	assert.True(t, contains(olds, "fruit_dc_coverregion_compare-20200609"))
-	assert.False(t, contains(olds, "fusion_cdn-2020.06.29"))
-	assert.False(t, contains(olds, "hexv2-2030.07.09"))
+	assert.True(t, contains(olds, "index-a-2020.05.06"))
+	assert.True(t, contains(olds, "index-b-20200609"))
+	assert.False(t, contains(olds, "index-e-2020.06.29"))
+	assert.False(t, contains(olds, "index-c-2030.07.09"))
 }
