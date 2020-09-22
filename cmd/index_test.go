@@ -60,7 +60,7 @@ func TestFilterIndexsEarlyThan(t *testing.T) {
 func TestFilterIndexsEarlyThanWithCustomDays(t *testing.T) {
 	var customDays = map[string]int64{
 		"index-e": 10000000,
-		"index-c":      7,
+		"index-c": 7,
 	}
 
 	names := []string{

@@ -99,7 +99,7 @@ func close() {
 func delete() {
 	for _, cluster := range clusters {
 		names := cluster.GetClosedIndexNames()
-		names = filterIndexsEarlyThan(names, cluster.IndexDefaultRemainDays, map[string]int64{})
+		names = filterIndexsEarlyThan(names, cluster.IndexDefaultRemainDays, cluster.IndexRemainDays)
 		for _, name := range names {
 			cluster.DeleteIndex(name)
 		}

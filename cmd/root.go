@@ -19,8 +19,9 @@ type Cluster struct {
 	ESClient               *elastic.Client
 	Addresses              []string
 	IndexOpenDays          map[string]int64 `mapstructure:"index_open_days"`
-	IndexDefaultRemainDays int64            `mapstructure:"index_default_remain_days"`
 	IndexDefaultOpenDays   int64            `mapstructure:"index_default_open_days"`
+	IndexRemainDays        map[string]int64 `mapstructure:"index_remain_days"`
+	IndexDefaultRemainDays int64            `mapstructure:"index_default_remain_days"`
 }
 
 func (cluster *Cluster) GetOpenedIndexNames() []string {
