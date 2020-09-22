@@ -1,6 +1,6 @@
 module linshaoyong.com/elastico
 
-go 1.14
+go 1.15
 
 require (
 	github.com/mailru/easyjson v0.7.1 // indirect
