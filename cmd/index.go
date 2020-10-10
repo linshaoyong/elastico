@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var wg sync.WaitGroup
 
 var indexCmd = &cobra.Command{
 	Use:   "index",
@@ -27,7 +30,6 @@ var indexCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(indexCmd)
-
 	indexCmd.Flags().String("a", "list", "index action")
 }
 
@@ -89,19 +91,29 @@ func list() {
 
 func close() {
 	for _, cluster := range clusters {
-		names := filterIndexsEarlyThan(cluster.GetOpenedIndexNames(), cluster.IndexDefaultOpenDays, cluster.IndexOpenDays)
-		for _, name := range names {
-			cluster.CloseIndex(name)
-		}
+		wg.Add(1)
+		go func(c Cluster) {
+			names := filterIndexsEarlyThan(c.GetOpenedIndexNames(), c.IndexDefaultOpenDays, c.IndexOpenDays)
+			for _, name := range names {
+				c.CloseIndex(name)
+			}
+			defer wg.Done()
+		}(cluster)
 	}
+	wg.Wait()
 }
 
 func delete() {
 	for _, cluster := range clusters {
-		names := cluster.GetClosedIndexNames()
-		names = filterIndexsEarlyThan(names, cluster.IndexDefaultRemainDays, cluster.IndexRemainDays)
-		for _, name := range names {
-			cluster.DeleteIndex(name)
-		}
+		wg.Add(1)
+		go func(c Cluster) {
+			names := c.GetClosedIndexNames()
+			names = filterIndexsEarlyThan(names, c.IndexDefaultRemainDays, c.IndexRemainDays)
+			for _, name := range names {
+				c.DeleteIndex(name)
+			}
+			defer wg.Done()
+		}(cluster)
 	}
+	wg.Wait()
 }
